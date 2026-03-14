@@ -1,10 +1,12 @@
 use super::board::Board;
+use super::attackmaps::*;
 
 impl Board {
   
   const RANK_2: u64 = 0x0000_0000_0000_FF00;
   const RANK_7: u64 = 0x00FF_0000_0000_0000;
 
+  #[inline]
   pub fn get_pseudo_pawn_moves(&self, sq: u32) -> u64 {
     let pawn: u64 = 1 << sq;
     let mut move_mask: u64 = 0u64;
@@ -25,5 +27,9 @@ impl Board {
     }
 
     return move_mask;
+  }
+  #[inline]
+  pub fn get_pseudo_knight_moves(&self, sq: u32) -> u64 {
+    return KNIGHT_ATTACK_MAP[sq as usize];
   }
 }
