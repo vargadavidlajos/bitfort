@@ -1,4 +1,18 @@
 
+#[inline(always)]
+pub fn pop_lsb(value: &mut u64) -> u32 {
+  let idx = value.trailing_zeros();
+  *value &= !(1 << idx);
+  return idx;
+}
+
+#[inline(always)]
+pub fn pop_msb(value: &mut u64) -> u32 {
+  let idx = 63 - value.leading_zeros();
+  *value &= !(1 << idx);
+  return idx;
+}
+
 const RANK_NUMBERS: [char; 8] = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const FILE_LETTERS: [char; 8] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 pub fn notation_from_square_number(sq: u8) -> String {
