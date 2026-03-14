@@ -10,3 +10,84 @@ pub struct Board {
   pub(in super) en_passant_square: u64,   // 1 -> ep square, 0 -> no ep square
   pub(in super) side_to_move: u8          // 0 -> white to play, 1 -> black to play
 }
+
+impl Board {
+  pub fn new_clear() -> Self {
+    let mut bit_board: Self = Self {
+      bitboards: [0x0000_0000_0000_0000; 12],
+      piece_board: [12; 64],
+      occupancy: [0x0000_0000_0000_0000; 3],
+      castling_rights: 0b0000_0000,
+      pinned_squares: [4; 64],
+      pin_mask: 0u64,
+      en_passant_square: 0x0000_0000_0000_0000,
+      side_to_move: 0
+    };
+
+    return bit_board;
+  }
+  pub fn new() -> Self {
+    let mut bit_board: Board = Self {
+      bitboards: [0x0000_0000_0000_FF00,
+                0x0000_0000_0000_0042,
+                0x0000_0000_0000_0024,
+                0x0000_0000_0000_0081,
+                0x0000_0000_0000_0008,
+                0x0000_0000_0000_0010,
+                0x00FF_0000_0000_0000,
+                0x4200_0000_0000_0000,
+                0x2400_0000_0000_0000,
+                0x8100_0000_0000_0000,
+                0x0800_0000_0000_0000,
+                0x1000_0000_0000_0000],
+      piece_board: [12; 64],
+      occupancy: [0; 3],
+      castling_rights: 0b0000_1111,
+      pinned_squares: [4; 64],
+      pin_mask: 0u64,
+      en_passant_square: 0x0000_0000_0000_0000,
+      side_to_move: 0
+    };
+    bit_board.calc_occupancy();
+    bit_board.calc_piece_board();
+
+    return bit_board;
+  }
+
+  fn calc_occupancy(&mut self) {
+    self.occupancy = [0u64; 3];
+    for b in 0..6 {
+      self.occupancy[0] |= self.bitboards[b];
+    }
+    for b in 6..12 {
+      self.occupancy[1] |= self.bitboards[b];
+    }
+    self.occupancy[2] = self.occupancy[0] | self.occupancy[1];
+  }
+  fn calc_piece_board(&mut self) {
+    for sq in 0..64 {
+      for b in 0..12 {
+        if (self.bitboards[b as usize] & 1 << sq) != 0 {
+          self.piece_board[sq] = b;
+        }
+      }
+    }
+  }
+  pub fn place_piece(&mut self, sq: i32, piece: char) {
+    match piece {
+      'p' => {self.bitboards[6] |= 1 << sq}
+      'n' => {self.bitboards[7] |= 1 << sq}
+      'b' => {self.bitboards[8] |= 1 << sq}
+      'r' => {self.bitboards[9] |= 1 << sq}
+      'q' => {self.bitboards[10] |= 1 << sq}
+      'k' => {self.bitboards[11] |= 1 << sq}
+      'P' => {self.bitboards[0] |= 1 << sq}
+      'N' => {self.bitboards[1] |= 1 << sq}
+      'B' => {self.bitboards[2] |= 1 << sq}
+      'R' => {self.bitboards[3] |= 1 << sq}
+      'Q' => {self.bitboards[4] |= 1 << sq}
+      'K' => {self.bitboards[5] |= 1 << sq}
+       _  => ()
+    }
+  }
+}
