@@ -40,4 +40,30 @@ impl Board {
   pub fn get_pseudo_pawn_captures(&self, sq: u32) -> u64 {
     return PAWN_ATTACK_MAP[sq as usize][self.side_to_move as usize];
   }
+  #[inline]
+  pub fn get_pseudo_bishop_moves(&self, sq: u32) -> u64 {
+    let mut  moves = 0u64;
+    let sq  = sq as usize;
+    let occupancy = self.occupancy[2];
+    moves |= get_raycast_from_square_in_direction(occupancy, sq, 1);
+    moves |= get_raycast_from_square_in_direction(occupancy, sq, 3);
+    moves |= get_raycast_from_square_in_direction(occupancy, sq, 5);
+    moves |= get_raycast_from_square_in_direction(occupancy, sq, 7);
+
+    return moves;
+  }
+}
+#[inline(always)]
+pub fn get_raycast_from_square_in_direction(occupancy: u64, sq: usize, dir: usize) -> u64 {
+  let is_up: bool = dir / 4 == 0;
+  let mut ray: u64 = RAY_TABLE[sq][dir];
+  let blockers: u64 = occupancy & ray;
+
+  if blockers != 0 {
+    let first_blocker: u32 = if is_up { blockers.trailing_zeros() } else { 63 - blockers.leading_zeros() };
+
+    ray &= !RAY_TABLE[first_blocker as usize][dir];
+  }
+
+  return ray;
 }
