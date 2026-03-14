@@ -1,5 +1,6 @@
 use super::utils::*;
 
+#[derive(Copy, Clone)]
 pub struct BitMove {
   data: u32
 }
