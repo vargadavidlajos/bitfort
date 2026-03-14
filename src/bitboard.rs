@@ -4,3 +4,4 @@ pub mod legality;
 pub mod attackmaps;
 pub mod bitmove;
 pub mod attacks;
+pub mod movegen;
