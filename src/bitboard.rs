@@ -6,3 +6,4 @@ pub mod bitmove;
 pub mod attacks;
 pub mod movegen;
 pub mod checkinfo;
+pub mod movebuffer;
