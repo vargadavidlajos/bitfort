@@ -5,3 +5,4 @@ pub mod attackmaps;
 pub mod bitmove;
 pub mod attacks;
 pub mod movegen;
+pub mod checkinfo;
