@@ -42,11 +42,46 @@ impl Board {
     let opponents = self.occupancy[1 - self.side_to_move as usize];
     while pawns != 0 {
       let next_sq = pop_lsb(&mut pawns);
-
       let mut attacks: u64 = self.get_pseudo_pawn_captures(next_sq) & move_mask;
-      attacks = self.get_pin_masked_moves(attacks, next_sq);
-      attacks &= opponents;
+      let pin_mask = self.get_pin_mask(next_sq);
 
+      if self.en_passant_square != 0
+        && (attacks & self.en_passant_square & pin_mask != 0) {
+        let king = self.bitboards[5 + offset];
+        let to_sq = self.en_passant_square.trailing_zeros();
+        let captured_sq = if self.side_to_move == 0 {(to_sq - 8) as usize} else {(to_sq + 8) as usize};
+        let threat_mask = BISHOP_MOVE_MASK[captured_sq] | RAY_TABLE[captured_sq][0] | RAY_TABLE[captured_sq][4];
+        if king & threat_mask == 0 {
+          buffer.add(BitMove::en_passant(
+            next_sq,
+            to_sq 
+          ));
+        }
+        else {
+          let king_sq = king.trailing_zeros();
+          if king & BISHOP_MOVE_MASK[captured_sq] != 0 {
+            let sliders = self.bitboards[8 - offset] | self.bitboards[10 - offset];
+            if !self.is_en_passant_pinned(king_sq, captured_sq as u32, sliders) {
+              buffer.add(BitMove::en_passant(
+                next_sq,
+                to_sq 
+              ));
+            }
+          }
+          else {
+            let sliders = self.bitboards[9 - offset] | self.bitboards[10 - offset];
+            if !self.is_en_passand_pinned_horizontal(next_sq, captured_sq as u32, king_sq, sliders) {
+              buffer.add(BitMove::en_passant(
+                next_sq,
+                to_sq 
+              ));
+            }
+          }
+        }
+      }
+
+      attacks &= pin_mask;
+      attacks &= opponents;
       while attacks != 0 {
         let to_sq = attacks.trailing_zeros();
 

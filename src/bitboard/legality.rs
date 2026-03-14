@@ -2,6 +2,7 @@ use super::board::Board;
 use super::attackmaps::RAY_TABLE;
 use super::checkinfo::CheckInfo;
 use super::attacks::get_raycast_from_square_in_direction;
+use super::utils::*;
 
 impl Board {
   pub fn check_test(&self) -> CheckInfo {
@@ -97,5 +98,86 @@ impl Board {
     if self.pinned_squares[sq] == 4 { return moves; }
     let dir: u8 = self.pinned_squares[sq];
     return moves & (RAY_TABLE[sq][dir as usize] | RAY_TABLE[sq][4 + dir as usize]);
+  }
+  #[inline]
+  pub fn get_pin_mask(&self, sq: u32) -> u64 {
+    let sq: usize = sq as usize;
+    if self.pinned_squares[sq] == 4 { return !0u64; }
+    let dir: u8 = self.pinned_squares[sq];
+    return RAY_TABLE[sq][dir as usize] | RAY_TABLE[sq][4 + dir as usize];
+  }
+
+  pub(in super) fn is_en_passant_pinned(&self, king_sq: u32, pawn_sq: u32, sliders: u64) -> bool {
+    let occupancy = self.occupancy[2];
+    let pawn: u64 = 1 << pawn_sq;
+    let ray = RAY_TABLE[king_sq as usize][1];
+    if pawn & ray != 0 {
+      let mut blockers = ray & occupancy;
+      let first_blocker = pop_lsb(&mut blockers);
+      if first_blocker != pawn_sq 
+      || blockers == 0 {
+        return false;
+      }
+      let second_blocker = blockers.trailing_zeros();
+      return sliders & 1 << second_blocker != 0;
+    }
+
+    let ray = RAY_TABLE[king_sq as usize][3];
+    if pawn & ray != 0 {
+      let mut blockers = ray & occupancy;
+      let first_blocker = pop_lsb(&mut blockers);
+      if first_blocker != pawn_sq 
+      || blockers == 0 {
+        return false;
+      }
+      let second_blocker = blockers.trailing_zeros();
+      return sliders & 1 << second_blocker != 0;
+    }
+    
+    let ray = RAY_TABLE[king_sq as usize][5];
+    if pawn & ray != 0 {
+      let mut blockers = ray & occupancy;
+      let first_blocker = pop_msb(&mut blockers);
+      if first_blocker != pawn_sq 
+      || blockers == 0 {
+        return false;
+      }
+      let second_blocker = 63 - blockers.leading_zeros();
+      return sliders & 1 << second_blocker != 0;
+    }
+
+    let ray = RAY_TABLE[king_sq as usize][7];
+    if pawn & ray != 0 {
+      let mut blockers = ray & occupancy;
+      let first_blocker = pop_msb(&mut blockers);
+      if first_blocker != pawn_sq 
+      || blockers == 0 {
+        return false;
+      }
+      let second_blocker = 63 - blockers.leading_zeros();
+      return sliders & 1 << second_blocker != 0;
+    }
+
+    panic!("en passant pin to king not found!");
+  }
+  pub(in super) fn is_en_passand_pinned_horizontal(&self, pawn_sq: u32, captured_sq: u32, king_sq: u32, sliders: u64) -> bool {
+    
+    if sliders == 0 { return false; }
+    let captured_pawn_mask: u64 = !(1 << captured_sq);
+    let king: u64 = 1 << king_sq;
+    let search_mask = king | sliders;
+    let occupancy = self.occupancy[2];
+
+    let right_blockers = RAY_TABLE[pawn_sq as usize][0] & captured_pawn_mask & occupancy;
+    let left_blockers = RAY_TABLE[pawn_sq as usize][4] & captured_pawn_mask & occupancy;
+    if right_blockers & search_mask == 0 
+    || left_blockers & search_mask == 0 {
+      return false;
+    }
+    
+    let first_right_blocker = 1 << right_blockers.trailing_zeros();
+    let first_left_blocker = 1 << (63 - left_blockers.leading_zeros());
+    return (king & first_left_blocker != 0 && sliders & first_right_blocker != 0)
+        || (king & first_right_blocker != 0 && sliders & first_left_blocker != 0);
   }
 }

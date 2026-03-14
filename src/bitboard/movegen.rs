@@ -9,6 +9,7 @@ use super::board::Board;
 use super::movebuffer::MoveBuffer;
 use super::bitmove::BitMove;
 use super::checkinfo::CheckInfo;
+use super::attackmaps::*;
 use super::utils::*;
 
 impl Board {
