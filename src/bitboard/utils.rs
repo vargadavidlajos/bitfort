@@ -34,3 +34,8 @@ pub fn try_get_square_number_from_notation(notation: &str) -> Result<u8, ()> {
     return Result::Err(());
   }
 }
+
+const PIECE_CHARACTERS: [char; 12] = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'];
+pub fn get_character_by_piece_id(id: u8) -> char {
+  return PIECE_CHARACTERS[id as usize];
+}
