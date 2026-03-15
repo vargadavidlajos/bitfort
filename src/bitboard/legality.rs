@@ -180,4 +180,32 @@ impl Board {
     return (king & first_left_blocker != 0 && sliders & first_right_blocker != 0)
         || (king & first_right_blocker != 0 && sliders & first_left_blocker != 0);
   }
+
+  pub(in super) fn has_any_moves(&self) -> bool {
+    let offset = 6*self.side_to_move as usize;
+
+    let mut moves = self.get_bulk_pseudo_pawn_pushes(self.bitboards[offset]);
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_pawn_attacks(self.bitboards[offset]);
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_knight_moves(self.bitboards[1 + offset]);
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_bishop_moves(self.bitboards[2 + offset]);
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_rook_moves(self.bitboards[3 + offset]);
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_queen_moves(self.bitboards[4 + offset]);
+    if moves != 0 { return true; }
+
+    let safe_squares = self.get_safe_king_squares();
+    moves = self.get_pseudo_king_moves(self.bitboards[5 + offset].trailing_zeros()) & safe_squares & !self.occupancy[2];
+    if moves != 0 { return true; }
+
+    return false;
+  }
 }
