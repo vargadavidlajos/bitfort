@@ -208,4 +208,31 @@ impl Board {
 
     return false;
   }
+  pub(in super) fn has_any_moves_in_check(&self, block_mask: u64) -> bool {
+    let offset = 6 * self.side_to_move as usize;
+
+    let mut moves = self.get_bulk_pseudo_pawn_pushes(self.bitboards[offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_pawn_attacks(self.bitboards[offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_knight_moves(self.bitboards[1 + offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_bishop_moves(self.bitboards[2 + offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_rook_moves(self.bitboards[3 + offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    moves = self.get_bulk_pseudo_queen_moves(self.bitboards[4 + offset]) & block_mask;
+    if moves != 0 { return true; }
+
+    let safe_squares = self.get_safe_king_squares();
+    moves = self.get_pseudo_king_moves(self.bitboards[5 + offset].trailing_zeros()) & safe_squares & !self.occupancy[self.side_to_move as usize];
+    if moves != 0 { return true; }
+    
+    return false;
+  }
 }
