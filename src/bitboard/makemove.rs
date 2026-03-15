@@ -28,7 +28,7 @@ impl Board {
         self.make_castle(played_move);
       }
       BitMove::EN_PASSANT => {
-        self.make_enpassant(played_move);
+        taken_piece = self.make_enpassant(played_move);
       }
       _ => panic!("Tried executing move of invalid type!")
     }
