@@ -1,7 +1,7 @@
 use super::*;
 
 impl Board {
-  pub fn make_capture(&mut self, played_move: &BitMove) {
+  pub fn make_capture(&mut self, played_move: &BitMove) -> u8 {
     let main_from: usize = played_move.from_square() as usize;
     let main_to: usize = played_move.to_square() as usize;
     let main_piece: usize = self.piece_board(main_from as u8) as usize;
@@ -11,9 +11,7 @@ impl Board {
     let castling_offset = 2 - 2 * self.side_to_move as usize;
     let castling_rights = self.castling_rights >> castling_offset;
 
-    let mut taken_piece = 0u8;
-
-    taken_piece = self.piece_board(main_to as u8);
+    let taken_piece = self.piece_board(main_to as u8);
     let secondary_piece = taken_piece as usize;
     let secondary_from = main_to;
 
@@ -78,5 +76,7 @@ impl Board {
         }
       }
     }
+
+    return taken_piece;
   }
 }

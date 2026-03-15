@@ -13,7 +13,7 @@ impl Board {
   pub fn make_move(&mut self, played_move: &BitMove) -> UnmakeInfo {
     let move_type = played_move.move_type();
 
-    let taken_piece = 0u8;
+    let mut taken_piece = 0u8;
     let old_castling_rights = self.castling_rights();
     let old_en_passant_square = self.en_passant_square();
 
@@ -22,7 +22,7 @@ impl Board {
         self.make_quiet(played_move);
       }
       BitMove::CAPTURE => {
-        self.make_capture(played_move);
+        taken_piece = self.make_capture(played_move);
       }
       BitMove::CASTLE => {
         self.make_castle(played_move);
