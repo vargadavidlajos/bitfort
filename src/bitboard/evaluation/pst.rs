@@ -2,7 +2,7 @@ use super::*;
 
 impl Board {
   #[inline]
-  fn eval_by_pst(&self) -> i32 {
+  pub(in super) fn eval_by_pst(&self) -> i32 {
     let eval = (Self::pawn_pst(self.bitboards[0], true) - Self::pawn_pst(self.bitboards[6], false))
                   + (Self::knight_pst(self.bitboards[1], true) - Self::knight_pst(self.bitboards[7], false))
                   + (Self::bishop_pst(self.bitboards[2], true) - Self::bishop_pst(self.bitboards[8], false))

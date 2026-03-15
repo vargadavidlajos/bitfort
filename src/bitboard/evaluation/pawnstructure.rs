@@ -1,7 +1,7 @@
 use super::*;
 
 impl Board {
-  fn pawn_structure(&self) -> i32 {
+  pub fn pawn_structure(&self) -> i32 {
     let white_pawn_mask = self.bitboards[0];
     let black_pawn_mask = self.bitboards[6];
 
