@@ -224,6 +224,22 @@ impl Board {
 
     return move_mask;
   }
+
+  #[inline]
+  pub fn get_bulk_pseudo_knight_moves(&self, mut knights: u64) -> u64 {
+    knights &= !self.pin_mask;
+    let mut moves = 0u64;
+    let avoid_friendly = !self.occupancy[self.side_to_move as usize];
+
+    while knights != 0 {
+      let knight_sq = knights.trailing_zeros();
+      knights &= !(1 << knight_sq);
+
+      moves |= self.get_pseudo_knight_moves(knight_sq) & avoid_friendly;
+    }
+
+    return moves;
+  }
 }
 #[inline(always)]
 pub fn get_raycast_from_square_in_direction(occupancy: u64, sq: usize, dir: usize) -> u64 {
