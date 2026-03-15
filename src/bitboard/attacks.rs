@@ -272,6 +272,22 @@ impl Board {
 
     return moves;
   }
+
+  #[inline]
+  pub fn get_bulk_pseudo_queen_moves(&self, mut queens: u64) -> u64 {
+    let mut moves = 0u64;
+    let avoid_friendly = !self.occupancy[self.side_to_move as usize];
+
+    while queens != 0 {
+      let queen_sq = queens.trailing_zeros();
+      queens &= !(1 << queen_sq);
+
+      let mask = self.get_pseudo_queen_moves(queen_sq) & avoid_friendly;
+      moves |= self.get_pin_masked_moves(mask, queen_sq)
+    }
+
+    return moves;
+  }
 }
 #[inline(always)]
 pub fn get_raycast_from_square_in_direction(occupancy: u64, sq: usize, dir: usize) -> u64 {
