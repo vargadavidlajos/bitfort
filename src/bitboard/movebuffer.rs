@@ -1,5 +1,6 @@
 use super::bitmove::BitMove;
 
+#[derive(Copy, Clone)]
 pub struct MoveBuffer {
 
   buffer: [BitMove; 256],
