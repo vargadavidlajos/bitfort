@@ -25,6 +25,12 @@ impl BitMove {
   pub const CASTLE: u8 = 2;
   pub const EN_PASSANT: u8 = 3;
 
+  pub fn null() -> Self {
+    Self {
+      data: 0u32
+    }
+  }
+
   #[inline]
   pub fn quiet(from: u32, to: u32, is_promotion: bool, promotion_piece: u32) -> Self {
 

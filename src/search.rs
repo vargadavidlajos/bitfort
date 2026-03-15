@@ -3,6 +3,8 @@ pub mod searchcontext;
 use std::io::{self, Error};
 
 use crate::bitboard::movebuffer::MoveBuffer;
+use crate::bitboard::bitmove::BitMove;
+use crate::bitboard::board::Board;
 
 use searchcontext::SearchContext;
 
@@ -34,5 +36,99 @@ impl Engine {
       temp_buffer: default_buffer,
       search_depth: s_depth
     });
+  }
+
+  pub fn iterative_deepening(&mut self, mut board: Board) -> (BitMove, i32, u64) {
+    let mut latest = (BitMove::null(), 0, 0);
+    let mut ctx = SearchContext::new();
+    let start_depth = if self.search_depth > 3 { 4 } else { 2 };
+
+    let alpha = -1_000_000;
+    let beta  =  1_000_000;
+
+    for depth in start_depth..=self.search_depth as usize {
+
+      latest = self.main_search(depth, &mut board, alpha, beta, &mut ctx);
+
+      if latest.1.abs() > 900_000 {
+        break;
+      }
+    }
+    return latest;
+  }
+
+  fn main_search(&mut self, depth: usize, board: &mut Board, mut alpha: i32, beta: i32, ctx: &mut SearchContext) -> (BitMove, i32, u64) {
+    
+    ctx.nodes += 1;
+
+    board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
+    let mut best_move = self.search_buffers[depth].get(0).clone();
+
+    for i in 0..self.search_buffers[depth].count() {
+      let bitmove = self.search_buffers[depth].get(i).clone();
+
+      let undo = board.make_move(&bitmove);
+      let eval = -self.negamax(depth - 1, board, -beta, -alpha, ctx);
+      board.unmake_move(&bitmove, &undo);
+
+      if eval > alpha {
+        alpha = eval;
+        best_move = bitmove;
+      }
+    }
+    return if board.side_to_move() == 0 { (best_move, alpha, ctx.nodes) } else { (best_move, -alpha, ctx.nodes) }; 
+  }
+
+  fn negamax(&mut self, depth: usize, board: &mut Board, mut alpha: i32, beta: i32, ctx: &mut SearchContext) -> i32 {
+    
+    ctx.nodes += 1;
+
+    if depth == 0 {
+      let (has_moves, in_check) = board.has_moves();
+
+      if !has_moves {
+        if in_check {
+          return -999_999 + (ctx.ply as i32)/2;
+        }
+        else { return 0; }
+      }
+      let eval = board.evaluation();
+      return if board.side_to_move() == 0 { eval } else { -eval };
+    }
+
+    let is_in_check = board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
+
+    if self.search_buffers[depth].count() == 0 {
+
+      if is_in_check {
+        return -999_999 + (ctx.ply as i32)/2;
+      }
+      else {
+        return 0;
+      }
+    }
+
+    ctx.ply += 1;
+
+    for i in 0..self.search_buffers[depth].count() {
+
+      let bitmove = self.search_buffers[depth].get(i).clone();
+      
+      let undo = board.make_move(&bitmove);
+      let eval = -self.negamax(depth - 1, board, -beta, -alpha, ctx);
+      board.unmake_move(&bitmove, &undo);
+
+      if eval > alpha {
+        alpha = eval;
+      }
+
+      if alpha >= beta {
+        ctx.ply -= 1;
+        return alpha;
+      }
+    }
+    ctx.ply -= 1;
+
+    return alpha; 
   }
 }
