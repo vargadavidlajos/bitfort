@@ -1,7 +1,7 @@
 use super::*;
 
 impl Board {
-  pub fn make_move(&mut self, played_move: &BitMove) {
+  pub fn make_enpassant(&mut self, played_move: &BitMove) {
     let main_from: usize = played_move.from_square() as usize;
     let main_to: usize = played_move.to_square() as usize;
     let main_piece: usize = self.piece_board(main_from as u8) as usize;

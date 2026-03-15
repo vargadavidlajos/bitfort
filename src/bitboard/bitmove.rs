@@ -20,6 +20,11 @@ pub struct BitMove {
 
 impl BitMove {
 
+  pub const QUIET: u8 = 0;
+  pub const CAPTURE: u8 = 1;
+  pub const CASTLE: u8 = 2;
+  pub const EN_PASSANT: u8 = 3;
+
   #[inline]
   pub fn quiet(from: u32, to: u32, is_promotion: bool, promotion_piece: u32) -> Self {
 
