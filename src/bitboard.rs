@@ -10,3 +10,4 @@ pub mod movebuffer;
 pub mod makemove;
 pub mod unmakemove;
 pub mod unmakeinfo;
+pub mod evaluation;
