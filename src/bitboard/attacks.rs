@@ -256,6 +256,22 @@ impl Board {
 
     return moves;
   }
+
+  #[inline]
+  pub fn get_bulk_pseudo_rook_moves(&self, mut rooks: u64) -> u64 {
+    let mut moves = 0u64;
+    let avoid_friendly = !self.occupancy[self.side_to_move as usize];
+
+    while rooks != 0 {
+      let rook_sq = rooks.trailing_zeros();
+      rooks &= !(1 << rook_sq);
+
+      let mask = self.get_pseudo_rook_moves(rook_sq) & avoid_friendly;
+      moves |= self.get_pin_masked_moves(mask, rook_sq);
+    }
+
+    return moves;
+  }
 }
 #[inline(always)]
 pub fn get_raycast_from_square_in_direction(occupancy: u64, sq: usize, dir: usize) -> u64 {
