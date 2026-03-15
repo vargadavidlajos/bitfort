@@ -8,3 +8,4 @@ pub mod movegen;
 pub mod checkinfo;
 pub mod movebuffer;
 pub mod makemove;
+pub mod unmakemove;
