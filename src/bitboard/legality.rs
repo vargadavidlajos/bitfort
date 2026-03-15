@@ -235,4 +235,13 @@ impl Board {
     
     return false;
   }
+  pub(in super) fn has_any_moves_in_double_check(&self) -> bool {
+    let offset = 6 * self.side_to_move as usize;
+
+    let safe_squares = self.get_safe_king_squares();
+    let moves = self.get_pseudo_king_moves(self.bitboards[5 + offset].trailing_zeros()) & safe_squares & !self.occupancy[2];
+    if moves != 0 { return true; }
+
+    return false;
+  }
 }
