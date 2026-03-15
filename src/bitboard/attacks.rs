@@ -5,6 +5,8 @@ impl Board {
   
   const RANK_2: u64 = 0x0000_0000_0000_FF00;
   const RANK_7: u64 = 0x00FF_0000_0000_0000;
+  const RANK_3: u64 = 0x0000_0000_00FF_0000;
+  const RANK_6: u64 = 0x0000_FF00_0000_0000;
   const A_FILE: u64 = 0x0101_0101_0101_0101;
   const H_FILE: u64 = 0x8080_8080_8080_8080;
 
@@ -174,6 +176,53 @@ impl Board {
     attack_map |= self.get_pseudo_king_moves(piece_sq);
 
     return !attack_map;
+  }
+
+  #[inline]
+  pub fn get_bulk_pseudo_pawn_attacks(&self, pawns: u64) -> u64 {
+    let mut pinned_pawns = pawns & self.pin_mask;
+    let bulk_pawns = pawns & !pinned_pawns;
+    let mut attacks = 0u64;
+
+    if self.side_to_move == 0 {
+      attacks |= (bulk_pawns << 9 & !Self::A_FILE) | (bulk_pawns << 7 & !Self::H_FILE);
+    }
+    else {
+      attacks |= (bulk_pawns >> 9 & !Self::H_FILE) | (bulk_pawns >> 7 & !Self::A_FILE);
+    }
+
+    while pinned_pawns != 0 {
+      let next_pawn = pinned_pawns.trailing_zeros();
+      pinned_pawns &= !(1 << next_pawn);
+
+      let attack = self.get_pseudo_pawn_captures(next_pawn);
+      attacks |= self.get_pin_masked_moves(attack, next_pawn);
+    }
+
+    return attacks & (self.occupancy[1 - self.side_to_move as usize] | self.en_passant_square);
+  }
+  #[inline]
+  pub fn get_bulk_pseudo_pawn_pushes(&self, pawns: u64) -> u64 {
+    let mut pinned_pawns = pawns & self.pin_mask;
+    let bulk_pawns = pawns & !pinned_pawns;
+    let mut move_mask = 0u64;
+    if self.side_to_move == 0 {
+      let push = bulk_pawns << 8 & !self.occupancy[2];
+      move_mask |= push | (push & Self::RANK_3) << 8 & !self.occupancy[2];
+    }
+    else {
+      let push = bulk_pawns >> 8 & !self.occupancy[2];
+      move_mask |= push | (push & Self::RANK_6) >> 8 & !self.occupancy[2];
+    }
+
+    while pinned_pawns != 0 {
+      let next_pawn = pinned_pawns.trailing_zeros();
+      pinned_pawns &= !(1 << next_pawn);
+      let moves = self.get_pseudo_pawn_moves(next_pawn);
+      move_mask |= self.get_pin_masked_moves(moves, next_pawn);
+    }
+
+    return move_mask;
   }
 }
 #[inline(always)]
