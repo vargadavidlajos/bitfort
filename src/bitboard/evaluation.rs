@@ -5,3 +5,4 @@ pub mod pawnstructure;
 
 use super::board::Board;
 use luts::*;
+use super::utils::pop_lsb;

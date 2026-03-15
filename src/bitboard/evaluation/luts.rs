@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 
 pub const PIECE_VALUE: [i32; 12] = [100, 300, 350, 500, 900, 0, 100, 300, 350, 500, 900, 0];
 
@@ -66,3 +67,40 @@ pub const KING_PST: [i32; 64] = [
    40,  40,   0,   0,  0,   0,  40,  40,
    40,  60,  20,   0,  0,  20,  60,  40
 ];
+
+pub const DOUBLED_PAWN_PENALTY: [i32; 8] = [0, 0, 20, 35, 45, 50, 55, 60];
+pub const FILE_MASK: [u64; 8] = [
+  0x0101_0101_0101_0101,
+  0x0202_0202_0202_0202,
+  0x0404_0404_0404_0404,
+  0x0808_0808_0808_0808,
+  0x1010_1010_1010_1010,
+  0x2020_2020_2020_2020,
+  0x4040_4040_4040_4040,
+  0x8080_8080_8080_8080
+];
+
+pub static PASSED_PAWN_MASK: Lazy<[[u64; 2]; 64]> = Lazy::new(|| {
+  let mut table: [[u64; 2]; 64] = [[0u64; 2]; 64];
+
+  for sq in 0..64 {
+    let mut new_mask = (1 << sq) << 8 | ((1 << sq) << 9 & !FILE_MASK[0]) | ((1 << sq) << 7 & !FILE_MASK[7]);
+    table[sq][0] |= new_mask;
+
+    while new_mask != 0 {
+      new_mask = new_mask << 8;
+      table[sq][0] |= new_mask;
+    }
+  }
+  for sq in 0..64 {
+    let mut new_mask = (1 << sq) >> 8 | ((1 << sq) >> 9 & !FILE_MASK[7]) | ((1 << sq) >> 7 & !FILE_MASK[0]);
+    table[sq][1] |= new_mask;
+
+    while new_mask != 0 {
+      new_mask = new_mask >> 8;
+      table[sq][1] |= new_mask;
+    }
+  }
+
+  table
+});
