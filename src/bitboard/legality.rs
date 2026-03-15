@@ -181,6 +181,18 @@ impl Board {
         || (king & first_right_blocker != 0 && sliders & first_left_blocker != 0);
   }
 
+  pub fn has_moves(&mut self) -> (bool, bool) {
+    self.calc_pinned_squares();
+    let check_info = self.check_test();
+
+    let has_moves =  match check_info.check_count {
+      0 => self.has_any_moves(),
+      1 => self.has_any_moves_in_check(check_info.move_mask),
+      2 => self.has_any_moves_in_double_check(),
+      _ => panic!("too many checkers")
+    };
+    return (has_moves, check_info.check_count > 0);
+  }
   pub(in super) fn has_any_moves(&self) -> bool {
     let offset = 6*self.side_to_move as usize;
 
