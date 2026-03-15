@@ -14,16 +14,16 @@ impl Board {
 
     match move_type {
       BitMove::QUIET => {
-        
+        self.unmake_quiet(played_move, undo_info);
       }
       BitMove::CAPTURE => {
-        
+        self.unmake_capture(played_move, undo_info);
       }
       BitMove::CASTLE => {
-        
+        self.unmake_castle(played_move, undo_info);
       }
       BitMove::EN_PASSANT => {
-        
+        self.unmake_enpassant(played_move, undo_info);
       }
       _ => { panic!("Tried to revert move of invalid type!"); }
     }
