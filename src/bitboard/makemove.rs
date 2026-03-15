@@ -3,13 +3,19 @@ pub mod captures;
 pub mod castles;
 pub mod enpassants;
 
+use crate::bitboard::unmakeinfo::UnmakeInfo;
+
 use super::bitmove::BitMove;
 use super::board::Board;
 
 impl Board {
   #[inline]
-  pub fn make_move(&mut self, played_move: &BitMove) {
+  pub fn make_move(&mut self, played_move: &BitMove) -> UnmakeInfo {
     let move_type = played_move.move_type();
+
+    let taken_piece = 0u8;
+    let old_castling_rights = self.castling_rights();
+    let old_en_passant_square = self.en_passant_square();
 
     match move_type {
       BitMove::QUIET => {
@@ -34,5 +40,7 @@ impl Board {
     }
 
     self.side_to_move = 1 - self.side_to_move;
+
+    return UnmakeInfo::new(taken_piece, old_en_passant_square, old_castling_rights);
   }
 }
