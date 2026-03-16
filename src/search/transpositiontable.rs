@@ -28,4 +28,16 @@ impl TranspositionTable {
   pub fn new_generation(&mut self) {
     self.generation = (self.generation + 1)%16;
   }
+
+  #[inline(always)]
+  pub fn get(&mut self, hash: u64) -> Option<TTEntry> {
+    let index = (hash & self.hash_mask) as usize;
+    let entry = self.table[index];
+
+    if entry.entry_type() != TTEntry::NULL
+      && entry.key() == hash {
+        return Some(entry);
+    }
+    return None;
+  }
 }
