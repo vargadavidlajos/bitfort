@@ -52,4 +52,8 @@ impl MoveBuffer {
       self.buffer[i].1 = score;
     }
   }
+  #[inline(always)]
+  pub fn order_moves(&mut self) {
+    self.buffer[0..self.count].sort_unstable_by(|a, b| b.1.cmp(&a.1));
+  }
 }
