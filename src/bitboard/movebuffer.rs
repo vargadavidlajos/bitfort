@@ -1,4 +1,5 @@
 use super::bitmove::BitMove;
+use super::board::Board;
 
 #[derive(Copy, Clone)]
 pub struct MoveBuffer {
@@ -42,5 +43,13 @@ impl MoveBuffer {
   #[inline(always)]
   pub fn contents(&self) -> &[(BitMove, u16)] {
     return &self.buffer[0..self.count];
+  }
+
+  #[inline(always)]
+  pub fn score_moves(&mut self, board: &Board) {
+    for i in 0..self.count() {
+      let score = self.buffer[i].0.get_score(board);
+      self.buffer[i].1 = score;
+    }
   }
 }
