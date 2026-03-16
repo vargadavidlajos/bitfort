@@ -1,5 +1,7 @@
 pub mod transpositionentry;
 
+use crate::bitboard::bitmove::BitMove;
+
 use transpositionentry::TTEntry;
 
 pub struct TranspositionTable {
@@ -39,5 +41,12 @@ impl TranspositionTable {
         return Some(entry);
     }
     return None;
+  }
+  #[inline(always)]
+  pub fn store(&mut self, key: u64, best_move: BitMove, depth: u8, score: i32, entry_type: u8) {
+    let entry = TTEntry::new(key, best_move, entry_type, depth, score, self.generation);
+    let index = (key & self.hash_mask) as usize;
+
+    self.table[index] = entry;
   }
 }
