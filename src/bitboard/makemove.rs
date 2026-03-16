@@ -20,8 +20,8 @@ impl Board {
     let mut ep_zobrist_delta = 0u64;
 
     if self.en_passant_square != 0 {
-      self.en_passant_square = 0u64;
       ep_zobrist_delta = ZOBRIST_EN_PASSANT[self.en_passant_square.trailing_zeros() as usize];
+      self.en_passant_square = 0u64;
     }
 
     match move_type {
