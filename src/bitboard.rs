@@ -11,3 +11,4 @@ pub mod makemove;
 pub mod unmakemove;
 pub mod unmakeinfo;
 pub mod evaluation;
+pub mod zobrist;
