@@ -264,6 +264,11 @@ impl Board {
 
     self.hash = new_hash;
   } 
+  #[inline(always)]
+  pub fn update_hash(&mut self, zobrist_delta: u64) {
+    self.hash ^= zobrist_delta;
+  }
+
   pub fn place_piece(&mut self, sq: i32, piece: char) {
     match piece {
       'p' => {self.bitboards[6] |= 1 << sq}
