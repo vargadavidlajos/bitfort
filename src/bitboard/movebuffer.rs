@@ -42,5 +42,5 @@ impl MoveBuffer {
   #[inline(always)]
   pub fn contents(&self) -> &[(BitMove, u16)] {
     return &self.buffer[0..self.count];
-  } 
+  }
 }

@@ -1,4 +1,5 @@
 use super::utils::*;
+use super::board::Board;
 
 #[derive(Copy, Clone)]
 pub struct BitMove {
@@ -24,6 +25,8 @@ impl BitMove {
   pub const CAPTURE: u8 = 1;
   pub const CASTLE: u8 = 2;
   pub const EN_PASSANT: u8 = 3;
+
+  const MVV_LVA_VALUES: [u16; 12] = [10, 30, 35, 50, 90, 0, 10, 30, 35, 50, 90, 0];
 
   pub fn null() -> Self {
     Self {
@@ -88,6 +91,27 @@ impl BitMove {
   #[inline(always)]
   pub fn promotion_piece(&self) -> u8 {
     return 1 + ((self.data >> 15) & 0b11) as u8;
+  }
+
+  #[inline]
+  pub fn get_score(&self, board: &Board) -> u16 {
+    
+    let mut score = match self.move_type() {
+      0 => 0,
+      1 => self.mvv_lva(board),
+      2 => 1000,
+      3 => 100,
+      _ => panic!("this should never fail")
+    };
+    if self.is_promotion() {
+      score += Self::MVV_LVA_VALUES[self.promotion_piece() as usize]*5;
+    }
+    return score;
+  }
+  #[inline(always)]
+  fn mvv_lva(&self, board: &Board) -> u16 {
+    return Self::MVV_LVA_VALUES[board.piece_board(self.to_square()) as usize]*10
+        - Self::MVV_LVA_VALUES[board.piece_board(self.from_square()) as usize];
   }
 
   pub fn uci_notation(&self) -> String {
