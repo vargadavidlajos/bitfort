@@ -1,5 +1,6 @@
 use super::utils::notation_from_square_number;
 use super::utils::try_get_square_number_from_notation;
+use super::zobrist::*;
 
 pub struct Board {
   pub(in super) bitboards: [u64; 12],     // 0-5 -> white pieces (P, N, B, R, Q, K), 6-11 -> black pieces (p, n, b, r, q, k)
@@ -9,7 +10,8 @@ pub struct Board {
   pub(in super) pinned_squares: [u8; 64], // 0 -> E-W, 1 -> NE-SW, 2 -> N-S, 3 -> SE-NW, 4 -> no pin
   pub(in super) pin_mask: u64,            // 1 -> pin, 0 -> no pin
   pub(in super) en_passant_square: u64,   // 1 -> ep square, 0 -> no ep square
-  pub(in super) side_to_move: u8          // 0 -> white to play, 1 -> black to play
+  pub(in super) side_to_move: u8,         // 0 -> white to play, 1 -> black to play
+  pub(in super) hash: u64                 // zobrist hash
 }
 
 impl Board {
@@ -25,8 +27,10 @@ impl Board {
       pinned_squares: [4; 64],
       pin_mask: 0u64,
       en_passant_square: 0x0000_0000_0000_0000,
-      side_to_move: 0
+      side_to_move: 0,
+      hash: 0u64
     };
+    bit_board.calc_hash();
 
     return bit_board;
   }
@@ -50,10 +54,12 @@ impl Board {
       pinned_squares: [4; 64],
       pin_mask: 0u64,
       en_passant_square: 0x0000_0000_0000_0000,
-      side_to_move: 0
+      side_to_move: 0,
+      hash: 0u64
     };
     bit_board.calc_occupancy();
     bit_board.calc_piece_board();
+    bit_board.calc_hash();
 
     return bit_board;
   }
@@ -120,6 +126,7 @@ impl Board {
     }
     board.calc_pinned_squares();
     board.calc_piece_board();
+    board.calc_hash();
 
     return board;
   }
@@ -232,6 +239,31 @@ impl Board {
       }
     }
   }
+  fn calc_hash(&mut self) {
+    let mut new_hash: u64 = 0u64;
+
+    for sq in 0..64 {
+      for b in 0..12 {
+        if (self.bitboards[b] & 1 << sq) != 0 {
+          new_hash ^= ZOBRIST_TABLE[sq][b];
+        }
+      }
+    }
+    for i in 0..4 {
+      if (self.castling_rights & 1 << i) != 0 {
+        new_hash ^= ZOBRIST_EXTRAS[i];
+      }
+    }
+    if self.side_to_move != 0 {
+      new_hash ^= ZOBRIST_EXTRAS[4];
+    }
+    if self.en_passant_square != 0 {
+      let tz = self.en_passant_square.trailing_zeros();
+      new_hash ^= ZOBRIST_EN_PASSANT[tz as usize];
+    }
+
+    self.hash = new_hash;
+  } 
   pub fn place_piece(&mut self, sq: i32, piece: char) {
     match piece {
       'p' => {self.bitboards[6] |= 1 << sq}
