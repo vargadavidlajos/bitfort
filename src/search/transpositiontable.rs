@@ -23,4 +23,9 @@ impl TranspositionTable {
       hits: 0
     };
   }
+
+  #[inline(always)]
+  pub fn new_generation(&mut self) {
+    self.generation = (self.generation + 1)%16;
+  }
 }
