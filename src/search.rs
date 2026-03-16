@@ -74,8 +74,10 @@ impl Engine {
       let bitmove = self.search_buffers[depth].get(i).clone();
 
       let undo = board.make_move(&bitmove);
+      board.update_hash(undo.zobrist_delta());
       let eval = -self.negamax(depth - 1, board, -beta, -alpha, ctx);
       board.unmake_move(&bitmove, &undo);
+      board.update_hash(undo.zobrist_delta());
 
       if eval > alpha {
         alpha = eval;
@@ -125,8 +127,10 @@ impl Engine {
       let bitmove = self.search_buffers[depth].get(i).clone();
       
       let undo = board.make_move(&bitmove);
+      board.update_hash(undo.zobrist_delta());
       let eval = -self.negamax(depth - 1, board, -beta, -alpha, ctx);
       board.unmake_move(&bitmove, &undo);
+      board.update_hash(undo.zobrist_delta());
 
       if eval > alpha {
         alpha = eval;
