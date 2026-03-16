@@ -63,4 +63,10 @@ impl TTEntry {
   pub fn generation(&self) -> u8 {
     return (self.data >> 28) as u8;
   }
+
+  #[inline(always)]
+  pub fn replacement_score(&self, current_generation: u8) -> i32 {
+    let age_penalty = (current_generation.wrapping_sub(self.generation()) & 0xF) as i32;
+    return self.depth() as i32 * 2 - age_penalty;
+  }
 }
