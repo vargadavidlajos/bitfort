@@ -2,6 +2,7 @@ pub mod searchcontext;
 pub mod transpositiontable;
 
 use std::io::{self, Error};
+use std::cmp::max;
 
 use crate::bitboard::movebuffer::MoveBuffer;
 use crate::bitboard::bitmove::BitMove;
@@ -13,6 +14,8 @@ use searchcontext::SearchContext;
 
 pub const MAX_DEPTH: usize = 21;
 pub const MIN_MOVE_ORDER_DEPTH: usize = 2;
+
+pub const MIN_TT_STORE_DEPTH: usize = 2;
 
 pub struct Engine {
   search_buffers: [MoveBuffer; MAX_DEPTH],
@@ -88,6 +91,8 @@ impl Engine {
         best_move = bitmove;
       }
     }
+    self.tt.store_exact(board.hash(), best_move, depth as u8, alpha);
+
     return if board.side_to_move() == 0 { (best_move, alpha, ctx.nodes) } else { (best_move, -alpha, ctx.nodes) }; 
   }
 
@@ -126,6 +131,10 @@ impl Engine {
       self.search_buffers[depth].order_moves();
     }
 
+    let mut raised_alpha = false;
+    let mut best_move = self.search_buffers[depth].get(0).clone();
+    let mut best_score = i32::MIN + 1;
+
     for i in 0..self.search_buffers[depth].count() {
 
       let bitmove = self.search_buffers[depth].get(i).clone();
@@ -138,14 +147,31 @@ impl Engine {
 
       if eval > alpha {
         alpha = eval;
+        raised_alpha = true;
+      }
+      else if !raised_alpha {
+        best_score = max(best_score, eval);
       }
 
       if alpha >= beta {
+        if depth >= MIN_TT_STORE_DEPTH {
+          self.tt.store_lower(board.hash(), best_move, depth as u8, alpha);
+        }
+
         ctx.ply -= 1;
         return alpha;
       }
     }
     ctx.ply -= 1;
+
+    if depth >= MIN_TT_STORE_DEPTH {
+      if raised_alpha {
+        self.tt.store_exact(board.hash(), best_move, depth as u8, alpha);
+      }
+      else {
+        self.tt.store_upper(board.hash(), best_move, depth as u8, best_score);
+      }
+    }
 
     return alpha; 
   }

@@ -163,6 +163,10 @@ impl Board {
   pub fn side_to_move(&self) -> u8 {
     return self.side_to_move;
   }
+  #[inline(always)]
+  pub fn hash(&self) -> u64 {
+    return self.hash;
+  }
 
   #[inline(always)]
   pub fn current_king_square(&self) -> u32 {
