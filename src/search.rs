@@ -7,8 +7,8 @@ use std::cmp::max;
 use crate::bitboard::movebuffer::MoveBuffer;
 use crate::bitboard::bitmove::BitMove;
 use crate::bitboard::board::Board;
-use crate::search::transpositiontable::transpositionentry::TTEntry;
 
+use transpositiontable::transpositionentry::TTEntry;
 use transpositiontable::TranspositionTable;
 use searchcontext::SearchContext;
 
@@ -83,7 +83,6 @@ impl Engine {
     self.search_buffers[depth].order_moves();
     
     let mut best_move = self.search_buffers[depth].get(0).clone();
-
     for i in 0..self.search_buffers[depth].count() {
       let bitmove = self.search_buffers[depth].get(i).clone();
 
@@ -151,7 +150,55 @@ impl Engine {
     let mut best_move = self.search_buffers[depth].get(0).clone();
     let mut best_score = i32::MIN + 1;
 
-    for i in 0..self.search_buffers[depth].count() {
+    let undo = board.make_move(&best_move);
+    board.update_hash(undo.zobrist_delta());
+    let eval = -self.negamax(depth - 1, board, -beta, -alpha, ctx);
+    board.unmake_move(&best_move, &undo);
+    board.update_hash(undo.zobrist_delta());
+
+    if eval > alpha {
+      alpha = eval;
+      raised_alpha = true;
+    }
+    else if !raised_alpha {
+      best_score = max(best_score, eval);
+    }
+
+    if alpha >= beta {
+      if depth >= MIN_TT_STORE_DEPTH {
+        self.tt.store_lower(board.hash(), best_move, depth as u8, alpha);
+      }
+
+      ctx.ply -= 1;
+      return alpha;
+    }
+
+    if let Some(entry) = found_entry {
+      if entry.depth() as usize >= depth {
+        match entry.entry_type() {
+          TTEntry::UPPER => {
+            if entry.score() <= alpha {
+              ctx.ply -= 1;
+              return entry.score()
+            }
+          }
+          TTEntry::LOWER => {
+            if entry.score() >= beta {
+              ctx.ply -= 1;
+              return entry.score();
+            }
+            alpha = max(alpha, entry.score());
+          }
+          TTEntry::EXACT => {
+            ctx.ply -= 1;
+            return entry.score();
+          }
+          entry_type => { panic!("incorrect entry type returned: {}", entry_type) }
+        };
+      }
+    }
+
+    for i in 1..self.search_buffers[depth].count() {
 
       let bitmove = self.search_buffers[depth].get(i).clone();
       
@@ -164,6 +211,7 @@ impl Engine {
       if eval > alpha {
         alpha = eval;
         raised_alpha = true;
+        best_move = bitmove;
       }
       else if !raised_alpha {
         best_score = max(best_score, eval);
