@@ -10,6 +10,7 @@ use searchcontext::SearchContext;
 
 
 pub const MAX_DEPTH: usize = 21;
+pub const MIN_MOVE_ORDER_DEPTH: usize = 2;
 
 pub struct Engine {
   search_buffers: [MoveBuffer; MAX_DEPTH],
@@ -62,6 +63,10 @@ impl Engine {
     ctx.nodes += 1;
 
     board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
+    
+    self.search_buffers[depth].score_moves(&board);
+    self.search_buffers[depth].order_moves();
+    
     let mut best_move = self.search_buffers[depth].get(0).clone();
 
     for i in 0..self.search_buffers[depth].count() {
@@ -109,6 +114,10 @@ impl Engine {
     }
 
     ctx.ply += 1;
+    if depth >= MIN_MOVE_ORDER_DEPTH {
+      self.search_buffers[depth].score_moves(board);
+      self.search_buffers[depth].order_moves();
+    }
 
     for i in 0..self.search_buffers[depth].count() {
 
