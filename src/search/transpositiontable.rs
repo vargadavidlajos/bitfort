@@ -49,4 +49,31 @@ impl TranspositionTable {
 
     self.table[index] = entry;
   }
+  #[inline(always)]
+  pub fn store_exact(&mut self, key: u64, best_move: BitMove, depth: u8, score: i32) {
+    if let Some(entry) = self.get(key) {
+      if entry.entry_type() == 1 && entry.replacement_score(self.generation) >= depth as i32 * 2 {
+        return;
+      }
+    }
+    self.store(key, best_move, depth, score, TTEntry::EXACT);
+  }
+  #[inline(always)]
+  pub fn store_lower(&mut self, key: u64, best_move: BitMove, depth: u8, score: i32) {
+    if let Some(entry) = self.get(key) {
+      if entry.entry_type() == 1 || entry.replacement_score(self.generation) > depth as i32 * 2 {
+        return;
+      }
+    }
+    self.store(key, best_move, depth, score, TTEntry::LOWER);
+  }
+  #[inline(always)]
+  pub fn store_upper(&mut self, key: u64, best_move: BitMove, depth: u8, score: i32) {
+    if let Some(entry) = self.get(key) {
+      if entry.entry_type() == 1 || entry.replacement_score(self.generation) > depth as i32 * 2 {
+        return;
+      }
+    }
+    self.store(key, best_move, depth, score, TTEntry::UPPER);
+  }
 }
