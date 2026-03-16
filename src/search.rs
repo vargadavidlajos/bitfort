@@ -7,6 +7,7 @@ use crate::bitboard::movebuffer::MoveBuffer;
 use crate::bitboard::bitmove::BitMove;
 use crate::bitboard::board::Board;
 
+use transpositiontable::TranspositionTable;
 use searchcontext::SearchContext;
 
 
@@ -16,6 +17,7 @@ pub const MIN_MOVE_ORDER_DEPTH: usize = 2;
 pub struct Engine {
   search_buffers: [MoveBuffer; MAX_DEPTH],
   temp_buffer: MoveBuffer,
+  tt: TranspositionTable,
   search_depth: u8
 }
 
@@ -25,10 +27,11 @@ impl Engine {
     return Self {
       search_buffers: [default_buffer; MAX_DEPTH],
       temp_buffer: default_buffer,
+      tt: TranspositionTable::new(20),
       search_depth: 10
     };
   }
-  pub fn new(s_depth: u8) -> Result<Self, Error> {
+  pub fn new(s_depth: u8, hash_length: u32) -> Result<Self, Error> {
     let default_buffer = MoveBuffer::new();
     if s_depth < 2 {
       return Err(Error::new(io::ErrorKind::InvalidInput, "search depth has to be at least 2 plies!"));
@@ -36,6 +39,7 @@ impl Engine {
     return Ok(Self {
       search_buffers: [default_buffer; MAX_DEPTH],
       temp_buffer: default_buffer,
+      tt: TranspositionTable::new(hash_length),
       search_depth: s_depth
     });
   }
