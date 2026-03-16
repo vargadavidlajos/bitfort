@@ -1,7 +1,7 @@
 use super::*;
 
 impl Board {
-  pub fn make_capture(&mut self, played_move: &BitMove) -> u8 {
+  pub fn make_capture(&mut self, played_move: &BitMove) -> (u8, u64) {
     let main_from: usize = played_move.from_square() as usize;
     let main_to: usize = played_move.to_square() as usize;
     let main_piece: usize = self.piece_board(main_from as u8) as usize;
@@ -10,6 +10,8 @@ impl Board {
     let color_offset = self.side_to_move * 6;
     let castling_offset = 2 - 2 * self.side_to_move as usize;
     let castling_rights = self.castling_rights >> castling_offset;
+
+    let mut zobrist_delta = 0u64;
 
     let taken_piece = self.piece_board(main_to as u8);
     let secondary_piece = taken_piece as usize;
@@ -21,10 +23,12 @@ impl Board {
     let opponent_occupancy = 1 - self.side_to_move as usize;
         
     self.bitboards[main_piece] &= !(1 << main_from);
+    zobrist_delta ^= ZOBRIST_TABLE[main_from][main_piece];
     self.occupancy[friendly_occupancy] &= !(1 << main_from);
     self.piece_board[main_from] = Self::EMPTY_SQUARE;
 
     self.bitboards[secondary_piece] &= !(1 << secondary_from);
+    zobrist_delta ^= ZOBRIST_TABLE[secondary_from][secondary_piece];
     self.occupancy[opponent_occupancy] &= !(1 << secondary_from);
     self.piece_board[secondary_from] = Self::EMPTY_SQUARE;
 
@@ -35,21 +39,25 @@ impl Board {
       if opponent_castling_rights & 0b01 != 0
         && secondary_from == back_rank_offset {
           self.castling_rights &= !(1 << opponent_castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[opponent_castling_offset];
       }
       else if opponent_castling_rights & 0b10 != 0
         && secondary_from == 7 + back_rank_offset {
           self.castling_rights &= !(2 << opponent_castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[1 + opponent_castling_offset];
       }
     }
 
     if played_move.is_promotion() {
       let promotion_piece = (color_offset + played_move.promotion_piece()) as usize;
       self.bitboards[promotion_piece] |= 1 << main_to;
+      zobrist_delta ^= ZOBRIST_TABLE[main_to][promotion_piece];
       self.occupancy[friendly_occupancy] |= 1 << main_to;
       self.piece_board[main_to] = promotion_piece as u8;
     }
     else {
       self.bitboards[main_piece] |= 1 << main_to;
+      zobrist_delta ^= ZOBRIST_TABLE[main_to][main_piece];
       self.occupancy[friendly_occupancy] |= 1 << main_to;
       self.piece_board[main_to] = main_piece as u8;
 
@@ -57,9 +65,11 @@ impl Board {
             && castling_rights != 0 {
         if castling_rights & 0b1 != 0 {
           self.castling_rights &= !(1 << castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[1 + castling_offset];
         }
         if castling_rights & 0b10 != 0 {
           self.castling_rights &= !(2 << castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[castling_offset];
         }
       }
       else if main_piece == 3 + color_offset as usize
@@ -69,14 +79,16 @@ impl Board {
         if castling_rights & 0b10 != 0
               && main_from == 7 + back_rank_offset {
           self.castling_rights &= !(2 << castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[1 + castling_offset];
         }
         else if castling_rights & 0b1 != 0
               && main_from == back_rank_offset {
           self.castling_rights &= !(1 << castling_offset);
+          zobrist_delta ^= ZOBRIST_EXTRAS[castling_offset];
         }
       }
     }
 
-    return taken_piece;
+    return (taken_piece, zobrist_delta);
   }
 }
