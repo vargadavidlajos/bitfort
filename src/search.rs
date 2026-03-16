@@ -1,4 +1,5 @@
 pub mod searchcontext;
+pub mod transpositiontable;
 
 use std::io::{self, Error};
 
