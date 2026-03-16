@@ -38,4 +38,29 @@ impl TTEntry {
       data: data
     }
   }
+
+  #[inline(always)]
+  pub fn key(&self) -> u64 {
+    return self.key;
+  }
+  #[inline(always)]
+  pub fn best_move(&self) -> BitMove {
+    return self.best_move.clone();
+  }
+  #[inline(always)]
+  pub fn entry_type(&self) -> u8 {
+    return (self.data & 0b11) as u8;
+  }
+  #[inline(always)]
+  pub fn depth(&self) -> u8 {
+    return ((self.data >> 2) & 0b11111) as u8;
+  }
+  #[inline(always)]
+  pub fn score(&self) -> i32 {
+    return ((self.data << 4) as i32) >> 11;
+  }
+  #[inline(always)]
+  pub fn generation(&self) -> u8 {
+    return (self.data >> 28) as u8;
+  }
 }
