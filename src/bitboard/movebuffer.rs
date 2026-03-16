@@ -3,22 +3,23 @@ use super::bitmove::BitMove;
 #[derive(Copy, Clone)]
 pub struct MoveBuffer {
 
-  buffer: [BitMove; 256],
+  buffer: [(BitMove, u16); 256],
   count: usize
 }
 
 impl MoveBuffer {
 
   pub fn new() -> Self {
+    let default: BitMove = BitMove::null();
     return Self {
-      buffer: [BitMove::quiet(0, 0, false, 1); 256],
+      buffer: [(default, 0); 256],
       count: 0
     };
   }
 
   #[inline]
-  pub fn add(&mut self, bitmove: BitMove) {
-    self.buffer[self.count] = bitmove;
+  pub fn add(&mut self, new_move: BitMove) {
+    self.buffer[self.count] = (new_move, 0);
     self.count += 1;
   }
   #[inline]
@@ -36,10 +37,10 @@ impl MoveBuffer {
   }
   #[inline(always)]
   pub fn get(&self, idx: usize) -> &BitMove {
-    return &self.buffer[idx];
+    return &self.buffer[idx].0;
   }
   #[inline(always)]
-  pub fn contents(&self) -> &[BitMove] {
+  pub fn contents(&self) -> &[(BitMove, u16)] {
     return &self.buffer[0..self.count];
   } 
 }
