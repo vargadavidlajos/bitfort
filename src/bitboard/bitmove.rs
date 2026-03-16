@@ -1,7 +1,7 @@
 use super::utils::*;
 use super::board::Board;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct BitMove {
   data: u32
 }
@@ -94,8 +94,12 @@ impl BitMove {
   }
 
   #[inline]
-  pub fn get_score(&self, board: &Board) -> u16 {
+  pub fn get_score(&self, board: &Board, tt_move: &BitMove) -> u16 {
     
+    if self.eq(tt_move) {
+      return 4000;
+    }
+
     let mut score = match self.move_type() {
       0 => 0,
       1 => self.mvv_lva(board),

@@ -7,6 +7,7 @@ use std::cmp::max;
 use crate::bitboard::movebuffer::MoveBuffer;
 use crate::bitboard::bitmove::BitMove;
 use crate::bitboard::board::Board;
+use crate::search::transpositiontable::transpositionentry::TTEntry;
 
 use transpositiontable::TranspositionTable;
 use searchcontext::SearchContext;
@@ -16,6 +17,7 @@ pub const MAX_DEPTH: usize = 21;
 pub const MIN_MOVE_ORDER_DEPTH: usize = 2;
 
 pub const MIN_TT_STORE_DEPTH: usize = 2;
+pub const MIN_TT_LOOKUP_DEPTH: usize = 3;
 
 pub struct Engine {
   search_buffers: [MoveBuffer; MAX_DEPTH],
@@ -72,7 +74,12 @@ impl Engine {
 
     board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
     
-    self.search_buffers[depth].score_moves(&board);
+    let mut tt_move = BitMove::null();
+    if let Some(entry) = self.tt.get(board.hash()) {
+      tt_move = entry.best_move();
+    }
+
+    self.search_buffers[depth].score_moves(&board, &tt_move);
     self.search_buffers[depth].order_moves();
     
     let mut best_move = self.search_buffers[depth].get(0).clone();
@@ -125,9 +132,18 @@ impl Engine {
       }
     }
 
+    let mut tt_move = BitMove::null();
+    let mut found_entry: Option<TTEntry> = None;
+    if depth >= MIN_TT_LOOKUP_DEPTH {
+      found_entry = self.tt.get(board.hash());
+      if let Some(entry) = found_entry {
+        tt_move = entry.best_move();
+      }
+    }
+
     ctx.ply += 1;
     if depth >= MIN_MOVE_ORDER_DEPTH {
-      self.search_buffers[depth].score_moves(board);
+      self.search_buffers[depth].score_moves(board, &tt_move);
       self.search_buffers[depth].order_moves();
     }
 
