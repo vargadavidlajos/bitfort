@@ -14,4 +14,10 @@ impl Board {
          + self.eval_by_pst()
          + self.pawn_structure();
   }
+
+  #[inline(always)]
+  pub fn futility_evaluation(&self) -> i32 {
+    return self.eval_by_material()
+          + self.eval_by_pst();
+  }
 }
