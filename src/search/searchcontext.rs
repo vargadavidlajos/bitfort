@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::bitboard::bitmove::BitMove;
 
 use super::MAX_DEPTH;
@@ -50,5 +52,13 @@ impl SearchContext {
     self.hh_table = [[[0; 64]; 64]; 2];
     self.nodes = 0;
     self.ply = 0;
+  }
+
+  #[inline(always)]
+  pub fn hh_score(&self, bitmove: &BitMove) -> u16 {
+    let side = self.ply % 2;
+    let from  = bitmove.from_square() as usize;
+    let to = bitmove.to_square() as usize;
+    return min(500, self.hh_table[side][from][to]);
   }
 }
