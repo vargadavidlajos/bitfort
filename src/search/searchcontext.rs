@@ -18,4 +18,10 @@ impl SearchContext {
       ply: 0
     }
   }
+
+  #[inline(always)]
+  pub fn current_killers(&self) -> (Option<BitMove>, Option<BitMove>) {
+    let ply = self.ply;
+    return (self.killer1[ply], self.killer2[ply]);
+  }
 }
