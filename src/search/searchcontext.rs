@@ -24,4 +24,14 @@ impl SearchContext {
     let ply = self.ply;
     return (self.killer1[ply], self.killer2[ply]);
   }
+
+  #[inline]
+  pub fn store_quiet_cutoff(&mut self, bitmove: BitMove) {
+    let ply = self.ply;
+
+    if self.killer1[ply] != Some(bitmove) {
+      self.killer2[ply] = self.killer1[ply];
+      self.killer1[ply] = Some(bitmove);
+    }
+  }
 }
