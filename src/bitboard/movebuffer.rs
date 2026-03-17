@@ -1,3 +1,5 @@
+use crate::search::searchcontext::SearchContext;
+
 use super::bitmove::BitMove;
 use super::board::Board;
 
@@ -46,9 +48,10 @@ impl MoveBuffer {
   }
 
   #[inline(always)]
-  pub fn score_moves(&mut self, board: &Board, tt_move: &BitMove, killers: (Option<BitMove>, Option<BitMove>)) {
+  pub fn score_moves(&mut self, board: &Board, tt_move: &BitMove, ctx: &SearchContext) {
+    let killers = ctx.current_killers();
     for i in 0..self.count() {
-      let score = self.buffer[i].0.get_score(board, tt_move, killers);
+      let score = self.buffer[i].0.get_score(board, tt_move, ctx, killers);
       self.buffer[i].1 = score;
     }
   }

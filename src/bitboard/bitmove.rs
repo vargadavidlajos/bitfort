@@ -1,3 +1,5 @@
+use crate::search::searchcontext::SearchContext;
+
 use super::utils::*;
 use super::board::Board;
 
@@ -94,7 +96,7 @@ impl BitMove {
   }
 
   #[inline]
-  pub fn get_score(&self, board: &Board, tt_move: &BitMove, killers: (Option<BitMove>, Option<BitMove>)) -> u16 {
+  pub fn get_score(&self, board: &Board, tt_move: &BitMove, ctx: &SearchContext, killers: (Option<BitMove>, Option<BitMove>)) -> u16 {
     
     if self.eq(tt_move) {
       return 4000;
@@ -107,7 +109,7 @@ impl BitMove {
     }
 
     let mut score = match self.move_type() {
-      0 => 0,
+      0 => ctx.hh_score(self),
       1 => self.mvv_lva(board),
       2 => 1000,
       3 => 100,

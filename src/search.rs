@@ -79,7 +79,7 @@ impl Engine {
       tt_move = entry.best_move();
     }
 
-    self.search_buffers[depth].score_moves(&board, &tt_move, ctx.current_killers());
+    self.search_buffers[depth].score_moves(&board, &tt_move, ctx);
     self.search_buffers[depth].order_moves();
     
     let mut best_move = self.search_buffers[depth].get(0).clone();
@@ -142,7 +142,7 @@ impl Engine {
 
     ctx.ply += 1;
     if depth >= MIN_MOVE_ORDER_DEPTH {
-      self.search_buffers[depth].score_moves(board, &tt_move, ctx.current_killers());
+      self.search_buffers[depth].score_moves(board, &tt_move, ctx);
       self.search_buffers[depth].order_moves();
     }
 
@@ -167,6 +167,9 @@ impl Engine {
     if alpha >= beta {
       if depth >= MIN_TT_STORE_DEPTH {
         self.tt.store_lower(board.hash(), best_move, depth as u8, alpha);
+      }
+      if best_move.move_type() == BitMove::QUIET {
+        ctx.store_quiet_cutoff(best_move, depth as u16);
       }
 
       ctx.ply -= 1;
@@ -220,6 +223,9 @@ impl Engine {
       if alpha >= beta {
         if depth >= MIN_TT_STORE_DEPTH {
           self.tt.store_lower(board.hash(), best_move, depth as u8, alpha);
+        }
+        if bitmove.move_type() == BitMove::QUIET {
+          ctx.store_quiet_cutoff(bitmove, depth as u16);
         }
 
         ctx.ply -= 1;
