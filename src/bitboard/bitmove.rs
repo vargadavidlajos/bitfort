@@ -2,6 +2,7 @@ use crate::search::searchcontext::SearchContext;
 
 use super::utils::*;
 use super::board::Board;
+use super::evaluation::luts::PIECE_VALUE;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct BitMove {
@@ -124,6 +125,21 @@ impl BitMove {
   fn mvv_lva(&self, board: &Board) -> u16 {
     return Self::MVV_LVA_VALUES[board.piece_board(self.to_square()) as usize]*10
         - Self::MVV_LVA_VALUES[board.piece_board(self.from_square()) as usize];
+  }
+
+  #[inline(always)]
+  pub fn skip_see(&self, board: &Board) -> bool {
+    if self.move_type() != 1 {
+      return false;
+    }
+
+    let to_sq = self.to_square();
+
+    let attacker_value = PIECE_VALUE[board.piece_board(self.from_square()) as usize];
+    let victim_value = PIECE_VALUE[board.piece_board(to_sq) as usize];
+
+    return attacker_value > victim_value
+        && board.is_square_attacked(to_sq as u32);
   }
 
   pub fn uci_notation(&self) -> String {
