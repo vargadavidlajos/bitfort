@@ -59,8 +59,8 @@ impl Engine {
     });
   }
 
-  pub fn iterative_deepening(&mut self, mut board: Board) -> (BitMove, i32, u64) {
-    let mut latest = (BitMove::null(), 0, 0);
+  pub fn iterative_deepening(&mut self, mut board: Board) -> (BitMove, i32, u64, u64) {
+    let mut latest = (BitMove::null(), 0, 0, 0);
     let mut ctx = SearchContext::new();
     let start_depth = if self.search_depth > 3 { 4 } else { 2 };
 
@@ -78,9 +78,9 @@ impl Engine {
     return latest;
   }
 
-  fn main_search(&mut self, depth: usize, board: &mut Board, mut alpha: i32, beta: i32, ctx: &mut SearchContext) -> (BitMove, i32, u64) {
+  fn main_search(&mut self, depth: usize, board: &mut Board, mut alpha: i32, beta: i32, ctx: &mut SearchContext) -> (BitMove, i32, u64, u64) {
     
-    ctx.nodes += 1;
+    ctx.s_nodes += 1;
 
     board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
     
@@ -109,12 +109,12 @@ impl Engine {
     }
     self.tt.store_exact(board.hash(), best_move, depth as u8, alpha);
 
-    return if board.side_to_move() == 0 { (best_move, alpha, ctx.nodes) } else { (best_move, -alpha, ctx.nodes) }; 
+    return if board.side_to_move() == 0 { (best_move, alpha, ctx.s_nodes, ctx.q_nodes) } else { (best_move, -alpha, ctx.s_nodes, ctx.q_nodes) }; 
   }
 
   fn negamax(&mut self, depth: usize, board: &mut Board, mut alpha: i32, beta: i32, ctx: &mut SearchContext) -> i32 {
     
-    ctx.nodes += 1;
+    ctx.s_nodes += 1;
 
     if depth == 0 {
       let (has_moves, in_check) = board.has_moves();
@@ -125,8 +125,7 @@ impl Engine {
         }
         else { return 0; }
       }
-      let eval = board.evaluation();
-      return if board.side_to_move() == 0 { eval } else { -eval };
+      return self.quiescence(0, board, alpha, beta, &mut ctx.q_nodes)
     }
 
     let is_in_check = board.collect_moves(&mut self.search_buffers[depth], &mut self.temp_buffer);
@@ -250,6 +249,61 @@ impl Engine {
       }
       else {
         self.tt.store_upper(board.hash(), best_move, depth as u8, best_score);
+      }
+    }
+
+    return alpha; 
+  }
+
+  fn quiescence(&mut self, ply: usize, board: &mut Board, mut alpha: i32, beta: i32, nodes: &mut u64) -> i32 {
+    
+    *nodes += 1;
+
+    if ply >= self.quiescence_depth as usize {
+      let eval = board.evaluation();
+      return if board.side_to_move() == 0 { eval } else { -eval };
+    }
+
+    let in_check = board.collect_captures(&mut self.quiescence_buffers[ply], &mut self.temp_buffer);
+
+    if self.quiescence_buffers[ply].count() == 0 {
+      if in_check {
+        return -999_999 + (ply as i32)/2;
+      }
+      let eval = board.evaluation();
+      return if board.side_to_move() == 0 { eval } else { -eval };
+    }
+
+    if ply < 4 {
+      let stat_eval = if board.side_to_move() == 0 { board.futility_evaluation() } else { -board.futility_evaluation() };
+      if stat_eval >= beta {
+        return stat_eval;
+      }
+      if !in_check && stat_eval + FUTILITY_MARGIN < alpha {
+        return alpha;
+      } 
+      alpha = max(stat_eval, alpha);
+    }
+
+    self.quiescence_buffers[ply].q_score_moves(board);
+    self.quiescence_buffers[ply].order_moves();
+
+    for i in 0..self.quiescence_buffers[ply].count() {
+
+      let bitmove = self.quiescence_buffers[ply].get(i).clone();
+
+      if !in_check && bitmove.skip_see(board) {
+        continue;
+      }
+
+      let undo = board.make_move(&bitmove);
+      let eval = -self.quiescence(ply + 1, board, -beta, -alpha, nodes);
+      board.unmake_move(&bitmove, &undo);
+
+      alpha = max(alpha, eval);
+
+      if alpha > beta {
+        break;
       }
     }
 

@@ -122,6 +122,17 @@ impl BitMove {
     return score;
   }
   #[inline(always)]
+  pub fn get_q_score(&self, board: &Board) -> u16 {
+    if self.move_type() != 1 { return 0; }
+    let mut score = self.mvv_lva(board);
+
+    if self.is_promotion() {
+      score += Self::MVV_LVA_VALUES[self.promotion_piece() as usize]*5;
+    }
+
+    return score;
+  }
+  #[inline(always)]
   fn mvv_lva(&self, board: &Board) -> u16 {
     return Self::MVV_LVA_VALUES[board.piece_board(self.to_square()) as usize]*10
         - Self::MVV_LVA_VALUES[board.piece_board(self.from_square()) as usize];

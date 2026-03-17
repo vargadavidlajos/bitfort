@@ -56,6 +56,13 @@ impl MoveBuffer {
     }
   }
   #[inline(always)]
+  pub fn q_score_moves(&mut self, board: &Board) {
+    for i in 0..self.count() {
+      let score = self.buffer[i].0.get_q_score(board);
+      self.buffer[i].1 = score;
+    }
+  }
+  #[inline(always)]
   pub fn order_moves(&mut self) {
     self.buffer[0..self.count].sort_unstable_by(|a, b| b.1.cmp(&a.1));
   }
