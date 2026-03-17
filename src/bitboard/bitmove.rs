@@ -94,10 +94,16 @@ impl BitMove {
   }
 
   #[inline]
-  pub fn get_score(&self, board: &Board, tt_move: &BitMove) -> u16 {
+  pub fn get_score(&self, board: &Board, tt_move: &BitMove, killers: (Option<BitMove>, Option<BitMove>)) -> u16 {
     
     if self.eq(tt_move) {
       return 4000;
+    }
+    else if killers.0 == Some(*self) {
+      return 3000;
+    }
+    else if killers.1 == Some(*self) {
+      return 2000;
     }
 
     let mut score = match self.move_type() {

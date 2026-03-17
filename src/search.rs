@@ -79,7 +79,7 @@ impl Engine {
       tt_move = entry.best_move();
     }
 
-    self.search_buffers[depth].score_moves(&board, &tt_move);
+    self.search_buffers[depth].score_moves(&board, &tt_move, ctx.current_killers());
     self.search_buffers[depth].order_moves();
     
     let mut best_move = self.search_buffers[depth].get(0).clone();
@@ -142,7 +142,7 @@ impl Engine {
 
     ctx.ply += 1;
     if depth >= MIN_MOVE_ORDER_DEPTH {
-      self.search_buffers[depth].score_moves(board, &tt_move);
+      self.search_buffers[depth].score_moves(board, &tt_move, ctx.current_killers());
       self.search_buffers[depth].order_moves();
     }
 

@@ -46,9 +46,9 @@ impl MoveBuffer {
   }
 
   #[inline(always)]
-  pub fn score_moves(&mut self, board: &Board, tt_move: &BitMove) {
+  pub fn score_moves(&mut self, board: &Board, tt_move: &BitMove, killers: (Option<BitMove>, Option<BitMove>)) {
     for i in 0..self.count() {
-      let score = self.buffer[i].0.get_score(board, tt_move);
+      let score = self.buffer[i].0.get_score(board, tt_move, killers);
       self.buffer[i].1 = score;
     }
   }
