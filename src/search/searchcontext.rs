@@ -5,6 +5,7 @@ use super::MAX_DEPTH;
 pub struct SearchContext {
   pub killer1: [Option<BitMove>; MAX_DEPTH],
   pub killer2: [Option<BitMove>; MAX_DEPTH],
+  hh_table: [[[u16; 64]; 64]; 2],
   pub nodes: u64,
   pub ply: usize
 }
@@ -14,6 +15,7 @@ impl SearchContext {
     return Self {
       killer1: [None; MAX_DEPTH],
       killer2: [None; MAX_DEPTH],
+      hh_table: [[[0; 64]; 64]; 2],
       nodes: 0,
       ply: 0
     }
