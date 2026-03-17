@@ -34,4 +34,11 @@ impl SearchContext {
       self.killer1[ply] = Some(bitmove);
     }
   }
+
+  pub fn search_end(&mut self) {
+    self.killer1 = [None; MAX_DEPTH];
+    self.killer2 = [None; MAX_DEPTH];
+    self.nodes = 0;
+    self.ply = 0;
+  }
 }
