@@ -65,4 +65,28 @@ impl Board {
     buffer.append(&temp_buffer);
     temp_buffer.clear();
   }
+
+  pub fn collect_captures(&mut self, buffer: &mut MoveBuffer, temp_buffer: &mut MoveBuffer) -> bool {
+    buffer.clear();
+    self.calc_pinned_squares();
+    let check_info = self.check_test();
+
+    match check_info.check_count {
+      0 => self.collect_all_captures(buffer),
+      1 => self.collect_moves_single_check(buffer, temp_buffer, &check_info),
+      2 => self.collect_king_evasion(buffer, temp_buffer),
+      _ => panic!("More than 2 checking pieces found as the same time!")
+    }
+    return check_info.check_count > 0;
+  }
+  pub(in super) fn collect_all_captures(&self, buffer: &mut MoveBuffer) {
+    let safe_squares = self.get_safe_king_squares();
+
+    self.add_pawn_captures(buffer, Self::NO_FILTER);
+    self.add_knight_captures(buffer, Self::NO_FILTER);
+    self.add_bishop_captures(buffer, Self::NO_FILTER);
+    self.add_rook_captures(buffer, Self::NO_FILTER);
+    self.add_queen_captures(buffer, Self::NO_FILTER);
+    self.add_king_captures(buffer, safe_squares);
+  }
 }
