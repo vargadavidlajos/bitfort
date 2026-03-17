@@ -14,16 +14,22 @@ use searchcontext::SearchContext;
 
 
 pub const MAX_DEPTH: usize = 21;
+pub const MAX_QDEPTH: usize = 60;
+
 pub const MIN_MOVE_ORDER_DEPTH: usize = 2;
 
 pub const MIN_TT_STORE_DEPTH: usize = 2;
 pub const MIN_TT_LOOKUP_DEPTH: usize = 3;
 
+pub const FUTILITY_MARGIN: i32 = 300;
+
 pub struct Engine {
   search_buffers: [MoveBuffer; MAX_DEPTH],
+  quiescence_buffers: [MoveBuffer; MAX_QDEPTH],
   temp_buffer: MoveBuffer,
   tt: TranspositionTable,
-  search_depth: u8
+  search_depth: u8,
+  quiescence_depth: u8
 }
 
 impl Engine {
@@ -31,21 +37,25 @@ impl Engine {
     let default_buffer = MoveBuffer::new();
     return Self {
       search_buffers: [default_buffer; MAX_DEPTH],
+      quiescence_buffers: [default_buffer; MAX_QDEPTH],
       temp_buffer: default_buffer,
       tt: TranspositionTable::new(20),
-      search_depth: 10
+      search_depth: 10,
+      quiescence_depth: 4
     };
   }
-  pub fn new(s_depth: u8, hash_length: u32) -> Result<Self, Error> {
+  pub fn new(s_depth: u8, q_depth: u8, hash_length: u32) -> Result<Self, Error> {
     let default_buffer = MoveBuffer::new();
     if s_depth < 2 {
       return Err(Error::new(io::ErrorKind::InvalidInput, "search depth has to be at least 2 plies!"));
     }
     return Ok(Self {
       search_buffers: [default_buffer; MAX_DEPTH],
+      quiescence_buffers: [default_buffer; MAX_QDEPTH],
       temp_buffer: default_buffer,
       tt: TranspositionTable::new(hash_length),
-      search_depth: s_depth
+      search_depth: s_depth,
+      quiescence_depth: q_depth
     });
   }
 
