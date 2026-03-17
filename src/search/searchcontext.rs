@@ -28,18 +28,26 @@ impl SearchContext {
   }
 
   #[inline]
-  pub fn store_quiet_cutoff(&mut self, bitmove: BitMove) {
+  pub fn store_quiet_cutoff(&mut self, bitmove: BitMove, depth: u16) {
     let ply = self.ply;
+    let side = ply % 2;
+    let from = bitmove.from_square() as usize;
+    let to = bitmove.to_square() as usize;
+    let hh_score = &mut self.hh_table[side][from][to];
 
     if self.killer1[ply] != Some(bitmove) {
       self.killer2[ply] = self.killer1[ply];
       self.killer1[ply] = Some(bitmove);
     }
+
+    *hh_score += depth * depth;
+    *hh_score -= *hh_score >> 3;
   }
 
   pub fn search_end(&mut self) {
     self.killer1 = [None; MAX_DEPTH];
     self.killer2 = [None; MAX_DEPTH];
+    self.hh_table = [[[0; 64]; 64]; 2];
     self.nodes = 0;
     self.ply = 0;
   }
